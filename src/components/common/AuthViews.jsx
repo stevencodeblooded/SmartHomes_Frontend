@@ -1,7 +1,7 @@
 // src/components/common/AuthViews.jsx
 // Shared auth UI used by both ContactModal and Header
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { X, ChevronDown } from "lucide-react";
 import { ApartmentLogoNested } from "./ApartmentLogo";
 
@@ -399,7 +399,6 @@ export const SignUpView = ({ onLoginClick, onSuccess }) => {
       >
         And get instant access to benefits
       </p>
-      {/* Benefits box */}
       <div
         style={{
           border: "1px solid #e5e7eb",
@@ -978,10 +977,50 @@ export const ForgotPasswordView = ({ onCancel }) => {
   );
 };
 
-// ── AUTH MODAL WRAPPER (reusable shell) ───────────────────────────────────────
+// ── AUTH MODAL WRAPPER ────────────────────────────────────────────────────────
 // startView: "login" | "signup-full" | "forgot"
 export const AuthModal = ({ onClose, startView = "login" }) => {
   const [view, setView] = useState(startView);
+
+  // ── Animation state: "entering" → "visible" → "leaving" → unmount ──
+  const [animState, setAnimState] = useState("entering");
+  const panelRef = useRef(null);
+
+  // Trigger entering → visible on mount
+  useEffect(() => {
+    // Use a tiny timeout so the browser paints the initial "entering" state first
+    const t = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setAnimState("visible"));
+    });
+    return () => cancelAnimationFrame(t);
+  }, []);
+
+  // Animated close: set leaving, then call onClose after transition ends
+  const handleClose = useCallback(() => {
+    setAnimState("leaving");
+    setTimeout(onClose, 300); // matches transition duration below
+  }, [onClose]);
+
+  // Close on Escape key
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleClose]);
+
+  // Click-outside: only close if the click landed on the backdrop itself
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) handleClose();
+  };
+
+  // Animation values per state
+  const backdropOpacity = animState === "visible" ? 1 : 0;
+  const panelTranslate =
+    animState === "visible" ? "translateY(0)" : "translateY(40px)";
+  const panelOpacity = animState === "visible" ? 1 : 0;
+  const panelScale = animState === "visible" ? "scale(1)" : "scale(0.97)";
 
   const renderView = () => {
     switch (view) {
@@ -990,7 +1029,7 @@ export const AuthModal = ({ onClose, startView = "login" }) => {
           <LoginView
             onSignUpClick={() => setView("signup-full")}
             onForgotClick={() => setView("forgot")}
-            onSuccess={onClose}
+            onSuccess={handleClose}
           />
         );
       case "signup-full":
@@ -1003,86 +1042,109 @@ export const AuthModal = ({ onClose, startView = "login" }) => {
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(0,0,0,0.5)",
-        padding: 16,
-      }}
-    >
+    <>
+      {/* Keyframes injected once */}
+      <style>{`
+        @keyframes authBackdropIn  { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes authPanelIn     { from { opacity: 0; transform: translateY(40px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      `}</style>
+
+      {/* Backdrop */}
       <div
+        onClick={handleBackdropClick}
         style={{
-          position: "relative",
-          background: "#fff",
-          borderRadius: 16,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
-          width: "100%",
-          maxWidth: 440,
-          maxHeight: "90vh",
-          overflowY: "auto",
-          padding: 32,
-          zIndex: 10000,
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 16,
+          background: "rgba(0,0,0,0.5)",
+          opacity: backdropOpacity,
+          transition: "opacity 0.3s ease",
         }}
       >
-        <button
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            top: 14,
-            right: 14,
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            border: "none",
-            background: "none",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-        >
-          <X size={20} color="#374151" />
-        </button>
+        {/* Panel */}
         <div
+          ref={panelRef}
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 24,
+            position: "relative",
+            background: "#fff",
+            borderRadius: 16,
+            boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
+            width: "100%",
+            maxWidth: 440,
+            maxHeight: "90vh",
+            overflowY: "auto",
+            padding: 32,
+            zIndex: 10000,
+            opacity: panelOpacity,
+            transform: `${panelTranslate} ${panelScale}`,
+            transition:
+              "opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1)",
           }}
         >
-          <div
+          {/* Close button */}
+          <button
+            onClick={handleClose}
             style={{
-              width: 65,
-              height: 65,
+              position: "absolute",
+              top: 14,
+              right: 14,
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              border: "none",
+              background: "none",
+              cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              transition: "background 0.15s",
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
           >
-            <ApartmentLogoNested />
-          </div>
-          <span
+            <X size={20} color="#374151" />
+          </button>
+
+          {/* Logo */}
+          <div
             style={{
-              fontSize: 15,
-              fontWeight: 500,
-              color: "#1a2e44",
-              fontFamily: "'Source Sans Pro', 'Segoe UI', sans-serif",
-              letterSpacing: "-0.3px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 24,
             }}
           >
-            SmartHomes
-          </span>
+            <div
+              style={{
+                width: 65,
+                height: 65,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <ApartmentLogoNested />
+            </div>
+            <span
+              style={{
+                fontSize: 15,
+                fontWeight: 500,
+                color: "#1a2e44",
+                fontFamily: "'Source Sans Pro', 'Segoe UI', sans-serif",
+                letterSpacing: "-0.3px",
+              }}
+            >
+              SmartHomes
+            </span>
+          </div>
+
+          {renderView()}
         </div>
-        {renderView()}
       </div>
-    </div>
+    </>
   );
 };

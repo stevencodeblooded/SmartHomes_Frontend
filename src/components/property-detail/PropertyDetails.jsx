@@ -9,12 +9,12 @@ const PropertyDetails = ({ details, relatedLink }) => {
 
   const mainDetails = [
     { label: "Property type", value: details.propertyType },
-    { label: "room", value: details.rooms },
-    { label: "area", value: `${details.area} m²` },
+    { label: "Room", value: details.rooms },
+    { label: "Area", value: `${details.area} m²` },
   ];
 
   const additionalDetails = [
-    { label: "Price", value: `${details.price} $` },
+    { label: "Price", value: `Ksh. ${details.price}` },
     { label: "Lease period", value: details.leasePeriod },
   ];
 

@@ -218,7 +218,6 @@ const PROPERTY_TYPES = [
 
 // ── URL param helpers ────────────────────────────────────────────────────────
 const paramsToFilters = (params) => {
-  // Support both ?type=apartments (hero single) and ?types=apartments,suites (sidebar multi)
   const typesParam =
     params.get("types") ||
     params.get("type") ||
@@ -275,7 +274,7 @@ const MobileFilterPanel = ({ filters, onFilterChange, onClose, onClear }) => {
         <style>{`@keyframes slideInLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
 
         <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-5 py-4 border-b border-gray-200">
-          <span className="font-bold text-gray-900">Filter criteria</span>
+          <span className="font-semibold text-gray-900">Filter criteria</span>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full"
@@ -382,40 +381,14 @@ const MobileFilterPanel = ({ filters, onFilterChange, onClose, onClear }) => {
 const ListingsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [mobileListings, setMobileListings] = useState(
-    ALL_LISTINGS.slice(0, MOBILE_INITIAL),
-  );
-  const [hasMore, setHasMore] = useState(true);
+
+  // ── FIX: replace mobileListings state + hasMore state with a single counter ──
+  const [mobileCount, setMobileCount] = useState(MOBILE_INITIAL);
 
   // All filter state lives in the URL
   const filters = paramsToFilters(searchParams);
   const sortBy = searchParams.get("sort") || "latest";
   const currentPage = Number(searchParams.get("page") || 1);
-
-  // Write a partial filter update back into the URL
-  const handleFilterChange = (partial) => {
-    const merged = { ...filters, ...partial };
-    setSearchParams(filtersToParams(merged, sortBy, 1), { replace: false });
-  };
-
-  const handleSortChange = (newSort) => {
-    setSearchParams(filtersToParams(filters, newSort, 1), { replace: false });
-  };
-
-  const handlePageChange = (page) => {
-    setSearchParams(filtersToParams(filters, sortBy, page), { replace: false });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleClearFilters = () => setSearchParams({}, { replace: false });
-
-  const handleToggleTypeFromHeader = (typeId) => {
-    handleFilterChange({
-      propertyTypes: filters.propertyTypes.includes(typeId)
-        ? filters.propertyTypes.filter((t) => t !== typeId)
-        : [...filters.propertyTypes, typeId],
-    });
-  };
 
   // Filtering + sorting derived from URL state
   const filteredListings = useMemo(() => {
@@ -452,27 +425,60 @@ const ListingsPage = () => {
     return result;
   }, [filters, sortBy]);
 
+  // ── FIX: mobile listings slice from filteredListings so filters apply ──
+  const mobileListings = filteredListings.slice(0, mobileCount);
+  const hasMore = mobileCount < filteredListings.length;
+
+  // ── FIX: reset mobile count whenever filters change ──
+  const handleFilterChange = (partial) => {
+    const merged = { ...filters, ...partial };
+    setMobileCount(MOBILE_INITIAL); // reset so load-more restarts from top
+    setSearchParams(filtersToParams(merged, sortBy, 1), { replace: false });
+  };
+
+  const handleSortChange = (newSort) => {
+    setMobileCount(MOBILE_INITIAL);
+    setSearchParams(filtersToParams(filters, newSort, 1), { replace: false });
+  };
+
+  const handlePageChange = (page) => {
+    setSearchParams(filtersToParams(filters, sortBy, page), { replace: false });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleClearFilters = () => {
+    setMobileCount(MOBILE_INITIAL);
+    setSearchParams({}, { replace: false });
+  };
+
+  const handleToggleTypeFromHeader = (typeId) => {
+    handleFilterChange({
+      propertyTypes: filters.propertyTypes.includes(typeId)
+        ? filters.propertyTypes.filter((t) => t !== typeId)
+        : [...filters.propertyTypes, typeId],
+    });
+  };
+
   const totalPages = Math.ceil(filteredListings.length / ITEMS_PER_PAGE);
   const paginatedListings = filteredListings.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE,
   );
 
+  // ── FIX: load more increments counter up to filtered total only ──
   const handleLoadMore = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 700));
-    setMobileListings((prev) => {
-      const updated = [...prev, ...ALL_LISTINGS];
-      if (updated.length >= 50) setHasMore(false);
-      return updated;
-    });
-  }, []);
+    setMobileCount((prev) =>
+      Math.min(prev + MOBILE_INITIAL, filteredListings.length),
+    );
+  }, [filteredListings.length]);
 
   const filterCount = activeFilterCount(filters);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 ">
       {/* Mobile top bar */}
-      <div className="lg:hidden sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
+      <div className="lg:hidden sticky mt-20 z-40 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
         <div className="flex-1 relative">
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -502,7 +508,7 @@ const ListingsPage = () => {
           <SlidersHorizontal className="w-4 h-4" />
           Filters
           {filterCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs font-semibold w-5 h-5 rounded-full flex items-center justify-center">
               {filterCount}
             </span>
           )}
@@ -537,10 +543,29 @@ const ListingsPage = () => {
               onToggleType={handleToggleTypeFromHeader}
             />
 
+            {/* Mobile grid — uses mobileListings (filtered + sliced) */}
             <div className="lg:hidden">
-              <PropertyGrid listings={mobileListings} />
+              {mobileListings.length > 0 ? (
+                <PropertyGrid listings={mobileListings} />
+              ) : (
+                <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+                  <p className="text-gray-500 text-lg font-medium">
+                    No listings match your filters.
+                  </p>
+                  <p className="text-gray-400 text-sm mt-2">
+                    Try adjusting your search criteria.
+                  </p>
+                  <button
+                    onClick={handleClearFilters}
+                    className="mt-4 px-5 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              )}
             </div>
 
+            {/* Desktop grid — paginated */}
             <div className="hidden lg:block">
               {paginatedListings.length > 0 ? (
                 <PropertyGrid listings={paginatedListings} />

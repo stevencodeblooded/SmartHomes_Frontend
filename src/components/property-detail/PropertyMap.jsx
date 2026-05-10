@@ -314,7 +314,7 @@ const PropertyMap = ({ location }) => {
 
       {/* Map Container */}
       <div
-        className="relative rounded-2xl overflow-hidden shadow-xl shadow-gray-200/80 border border-gray-100"
+        className="relative rounded-2xl z-20 overflow-hidden shadow-xl shadow-gray-200/80 border border-gray-100"
         style={{ height: "420px" }}
       >
         {/* Loading skeleton */}

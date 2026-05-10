@@ -107,27 +107,60 @@ const Header = () => {
 
                 {showMobileMenu && (
                   <div
-                    className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50"
+                    className="absolute right-0 mt-3 w-60 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.12)] z-50 animate-in fade-in zoom-in-95 duration-200"
                     style={{ top: "100%" }}
                   >
-                    <button
-                      onClick={() => openAuth("login")}
-                      className="w-full text-left px-5 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
-                    >
-                      <FiUser size={16} className="text-gray-500" />
-                      <span className="text-sm font-medium text-gray-700">
-                        Log in
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => openAuth("signup-full")}
-                      className="w-full text-left px-5 py-3 hover:bg-gray-50 transition-colors flex items-center gap-3"
-                    >
-                      <FiUser size={16} className="text-gray-500" />
-                      <span className="text-sm font-medium text-gray-700">
-                        Register
-                      </span>
-                    </button>
+                    {/* Top section */}
+                    <div className="p-2">
+                      <button
+                        onClick={() => openAuth("login")}
+                        className="group w-full flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200 hover:bg-red-50"
+                      >
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 group-hover:bg-red-100 transition-colors">
+                          <FiUser
+                            size={16}
+                            className="text-gray-500 group-hover:text-red-500 transition-colors"
+                          />
+                        </div>
+
+                        <div className="flex flex-col items-start">
+                          <span className="text-sm font-semibold text-gray-800 group-hover:text-red-600 transition-colors">
+                            Log in
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Access your account
+                          </span>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => openAuth("signup-full")}
+                        className="group w-full flex items-center gap-3 rounded-2xl px-4 py-3 transition-all duration-200 hover:bg-red-50"
+                      >
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 group-hover:bg-red-100 transition-colors">
+                          <FiUser
+                            size={16}
+                            className="text-gray-500 group-hover:text-red-500 transition-colors"
+                          />
+                        </div>
+
+                        <div className="flex flex-col items-start">
+                          <span className="text-sm font-semibold text-gray-800 group-hover:text-red-600 transition-colors">
+                            Register
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Create a new account
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+
+                    {/* Bottom subtle section */}
+                    <div className="border-t border-gray-100 px-4 py-3 bg-gray-50/60">
+                      <p className="text-xs leading-relaxed text-gray-500">
+                        Discover rentals, apartments, and homes across Kenya.
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
