@@ -343,6 +343,47 @@ export const TenantDropdown = ({ value, onChange, error }) => {
   );
 };
 
+// ── Animated view container ───────────────────────────────────────────────────
+// Wraps each view so switching views slides the new one in
+export const AnimatedView = ({ children, viewKey }) => {
+  const [displayChildren, setDisplayChildren] = useState(children);
+  const [transitionState, setTransitionState] = useState("idle"); // idle | exiting | entering
+  const prevKeyRef = useRef(viewKey);
+
+  useEffect(() => {
+    if (viewKey === prevKeyRef.current) return;
+
+    // 1. Slide current view out
+    setTransitionState("exiting");
+
+    const exitTimer = setTimeout(() => {
+      // 2. Swap content while invisible
+      setDisplayChildren(children);
+      setTransitionState("entering");
+      prevKeyRef.current = viewKey;
+
+      // 3. Slide new view in on next frame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setTransitionState("idle"));
+      });
+    }, 220); // matches exit transition duration
+
+    return () => clearTimeout(exitTimer);
+  }, [viewKey, children]);
+
+  const style = {
+    transition:
+      "opacity 0.22s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1)",
+    ...(transitionState === "exiting"
+      ? { opacity: 0, transform: "translateY(-12px)" }
+      : transitionState === "entering"
+        ? { opacity: 0, transform: "translateY(16px)" }
+        : { opacity: 1, transform: "translateY(0)" }),
+  };
+
+  return <div style={style}>{displayChildren}</div>;
+};
+
 // ── VIEW: Sign Up (contact flow) ──────────────────────────────────────────────
 export const SignUpView = ({ onLoginClick, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -977,31 +1018,23 @@ export const ForgotPasswordView = ({ onCancel }) => {
   );
 };
 
-// ── AUTH MODAL WRAPPER ────────────────────────────────────────────────────────
-// startView: "login" | "signup-full" | "forgot"
-export const AuthModal = ({ onClose, startView = "login" }) => {
-  const [view, setView] = useState(startView);
-
-  // ── Animation state: "entering" → "visible" → "leaving" → unmount ──
+// ── Shared modal shell — handles open/close animation + click-outside ─────────
+// Used by BOTH AuthModal (login/signup) and ContactSignUpModal
+export const ModalShell = ({ onClose, children }) => {
   const [animState, setAnimState] = useState("entering");
-  const panelRef = useRef(null);
 
-  // Trigger entering → visible on mount
   useEffect(() => {
-    // Use a tiny timeout so the browser paints the initial "entering" state first
-    const t = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setAnimState("visible"));
-    });
-    return () => cancelAnimationFrame(t);
+    const id = requestAnimationFrame(() =>
+      requestAnimationFrame(() => setAnimState("visible")),
+    );
+    return () => cancelAnimationFrame(id);
   }, []);
 
-  // Animated close: set leaving, then call onClose after transition ends
   const handleClose = useCallback(() => {
     setAnimState("leaving");
-    setTimeout(onClose, 300); // matches transition duration below
+    setTimeout(onClose, 300);
   }, [onClose]);
 
-  // Close on Escape key
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") handleClose();
@@ -1010,141 +1043,189 @@ export const AuthModal = ({ onClose, startView = "login" }) => {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleClose]);
 
-  // Click-outside: only close if the click landed on the backdrop itself
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) handleClose();
-  };
+  const isVisible = animState === "visible";
 
-  // Animation values per state
-  const backdropOpacity = animState === "visible" ? 1 : 0;
-  const panelTranslate =
-    animState === "visible" ? "translateY(0)" : "translateY(40px)";
-  const panelOpacity = animState === "visible" ? 1 : 0;
-  const panelScale = animState === "visible" ? "scale(1)" : "scale(0.97)";
+  return (
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+        background: "rgba(0,0,0,0.5)",
+        opacity: isVisible ? 1 : 0,
+        transition: "opacity 0.3s ease",
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          background: "#fff",
+          borderRadius: 16,
+          boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
+          width: "100%",
+          maxWidth: 440,
+          maxHeight: "90vh",
+          overflowY: "auto",
+          padding: 32,
+          zIndex: 10000,
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible
+            ? "translateY(0) scale(1)"
+            : "translateY(40px) scale(0.97)",
+          transition:
+            "opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1)",
+        }}
+      >
+        {/* Close button */}
+        <button
+          onClick={handleClose}
+          style={{
+            position: "absolute",
+            top: 14,
+            right: 14,
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            border: "none",
+            background: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background 0.15s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+        >
+          <X size={20} color="#374151" />
+        </button>
 
-  const renderView = () => {
+        {/* Logo */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 24,
+          }}
+        >
+          <div
+            style={{
+              width: 65,
+              height: 65,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ApartmentLogoNested />
+          </div>
+          <span
+            style={{
+              fontSize: 15,
+              fontWeight: 500,
+              color: "#1a2e44",
+              fontFamily: "'Source Sans Pro', 'Segoe UI', sans-serif",
+              letterSpacing: "-0.3px",
+            }}
+          >
+            SmartHomes
+          </span>
+        </div>
+
+        {/* Animated view content passed as children */}
+        {children(handleClose)}
+      </div>
+    </div>
+  );
+};
+
+// ── AUTH MODAL (login / signup-full / forgot) ─────────────────────────────────
+// startView: "login" | "signup-full" | "forgot"
+export const AuthModal = ({ onClose, startView = "login" }) => {
+  const [view, setView] = useState(startView);
+
+  const renderView = (handleClose) => {
     switch (view) {
       case "login":
         return (
-          <LoginView
-            onSignUpClick={() => setView("signup-full")}
-            onForgotClick={() => setView("forgot")}
-            onSuccess={handleClose}
-          />
+          <AnimatedView viewKey="login">
+            <LoginView
+              onSignUpClick={() => setView("signup-full")}
+              onForgotClick={() => setView("forgot")}
+              onSuccess={handleClose}
+            />
+          </AnimatedView>
         );
       case "signup-full":
-        return <SignUpFullView onBackToLogin={() => setView("login")} />;
+        return (
+          <AnimatedView viewKey="signup-full">
+            <SignUpFullView onBackToLogin={() => setView("login")} />
+          </AnimatedView>
+        );
       case "forgot":
-        return <ForgotPasswordView onCancel={() => setView("login")} />;
+        return (
+          <AnimatedView viewKey="forgot">
+            <ForgotPasswordView onCancel={() => setView("login")} />
+          </AnimatedView>
+        );
       default:
         return null;
     }
   };
 
-  return (
-    <>
-      {/* Keyframes injected once */}
-      <style>{`
-        @keyframes authBackdropIn  { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes authPanelIn     { from { opacity: 0; transform: translateY(40px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-      `}</style>
+  return <ModalShell onClose={onClose}>{renderView}</ModalShell>;
+};
 
-      {/* Backdrop */}
-      <div
-        onClick={handleBackdropClick}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 9999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 16,
-          background: "rgba(0,0,0,0.5)",
-          opacity: backdropOpacity,
-          transition: "opacity 0.3s ease",
-        }}
-      >
-        {/* Panel */}
-        <div
-          ref={panelRef}
-          style={{
-            position: "relative",
-            background: "#fff",
-            borderRadius: 16,
-            boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
-            width: "100%",
-            maxWidth: 440,
-            maxHeight: "90vh",
-            overflowY: "auto",
-            padding: 32,
-            zIndex: 10000,
-            opacity: panelOpacity,
-            transform: `${panelTranslate} ${panelScale}`,
-            transition:
-              "opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.2, 0.64, 1)",
-          }}
-        >
-          {/* Close button */}
-          <button
-            onClick={handleClose}
-            style={{
-              position: "absolute",
-              top: 14,
-              right: 14,
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              border: "none",
-              background: "none",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-          >
-            <X size={20} color="#374151" />
-          </button>
+// ── CONTACT SIGN-UP MODAL (sign-up to contact landlords) ─────────────────────
+// Separate modal used in the property contact flow
+export const ContactSignUpModal = ({ onClose, onSuccess }) => {
+  const [view, setView] = useState("signup-contact");
 
-          {/* Logo */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 24,
-            }}
-          >
-            <div
-              style={{
-                width: 65,
-                height: 65,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+  const renderView = (handleClose) => {
+    switch (view) {
+      case "signup-contact":
+        return (
+          <AnimatedView viewKey="signup-contact">
+            <SignUpView
+              onLoginClick={() => setView("login")}
+              onSuccess={() => {
+                if (onSuccess) onSuccess();
+                handleClose();
               }}
-            >
-              <ApartmentLogoNested />
-            </div>
-            <span
-              style={{
-                fontSize: 15,
-                fontWeight: 500,
-                color: "#1a2e44",
-                fontFamily: "'Source Sans Pro', 'Segoe UI', sans-serif",
-                letterSpacing: "-0.3px",
+            />
+          </AnimatedView>
+        );
+      case "login":
+        return (
+          <AnimatedView viewKey="login">
+            <LoginView
+              onSignUpClick={() => setView("signup-contact")}
+              onForgotClick={() => setView("forgot")}
+              onSuccess={() => {
+                if (onSuccess) onSuccess();
+                handleClose();
               }}
-            >
-              SmartHomes
-            </span>
-          </div>
+            />
+          </AnimatedView>
+        );
+      case "forgot":
+        return (
+          <AnimatedView viewKey="forgot">
+            <ForgotPasswordView onCancel={() => setView("login")} />
+          </AnimatedView>
+        );
+      default:
+        return null;
+    }
+  };
 
-          {renderView()}
-        </div>
-      </div>
-    </>
-  );
+  return <ModalShell onClose={onClose}>{renderView}</ModalShell>;
 };

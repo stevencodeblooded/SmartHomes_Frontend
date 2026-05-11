@@ -104,7 +104,7 @@ const PriceCard = ({
         {/* Contact Button */}
         <button
           onClick={onContactLandlord}
-          className="w-full bg-red-500 hover:bg-red-700 text-white font-semibold py-3.5 px-4 rounded-3xl transition-colors shadow-sm"
+          className="w-full bg-red-500 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-3xl transition-colors shadow-sm"
         >
           Contact the landlord
         </button>

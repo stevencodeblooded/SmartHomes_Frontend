@@ -1,53 +1,19 @@
 // src/components/property-detail/ContactModal.jsx
 
 import React, { useState } from "react";
-import { X } from "lucide-react";
-import { ApartmentLogoNested } from "../common/ApartmentLogo";
 import {
   SignUpView,
   LoginView,
   SignUpFullView,
   ForgotPasswordView,
+  StepIndicator,
+  primaryBtn,
+  // ModalShell and AnimatedView handle all animation + click-outside + Escape
+  ModalShell,
+  AnimatedView,
 } from "../common/AuthViews";
-import { StepIndicator, primaryBtn } from "../common/AuthViews";
-
-// ── Logo ──────────────────────────────────────────────────────────────────────
-const Logo = () => (
-  <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: 24,
-    }}
-  >
-    <div
-      style={{
-        width: 65,
-        height: 65,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <ApartmentLogoNested />
-    </div>
-    <span
-      style={{
-        fontSize: 15,
-        fontWeight: 500,
-        color: "#1a2e44",
-        fontFamily: "'Source Sans Pro', 'Segoe UI', sans-serif",
-        letterSpacing: "-0.3px",
-      }}
-    >
-      SmartHomes
-    </span>
-  </div>
-);
 
 // ── Contact success view ──────────────────────────────────────────────────────
-
 const ContactView = ({ onClose }) => (
   <>
     <StepIndicator currentStep={2} />
@@ -88,87 +54,51 @@ const ContactView = ({ onClose }) => (
 const ContactModal = ({ onClose }) => {
   const [view, setView] = useState("signup");
 
-  const renderView = () => {
+  const renderView = (handleClose) => {
     switch (view) {
       case "signup":
         return (
-          <SignUpView
-            onLoginClick={() => setView("login")}
-            onSuccess={() => setView("contact")}
-          />
+          <AnimatedView viewKey="signup">
+            <SignUpView
+              onLoginClick={() => setView("login")}
+              onSuccess={() => setView("contact")}
+            />
+          </AnimatedView>
         );
       case "login":
         return (
-          <LoginView
-            onSignUpClick={() => setView("signup-full")}
-            onForgotClick={() => setView("forgot")}
-            onSuccess={() => setView("contact")}
-          />
+          <AnimatedView viewKey="login">
+            <LoginView
+              onSignUpClick={() => setView("signup")}
+              onForgotClick={() => setView("forgot")}
+              onSuccess={() => setView("contact")}
+            />
+          </AnimatedView>
         );
       case "signup-full":
-        return <SignUpFullView onBackToLogin={() => setView("login")} />;
+        return (
+          <AnimatedView viewKey="signup-full">
+            <SignUpFullView onBackToLogin={() => setView("login")} />
+          </AnimatedView>
+        );
       case "forgot":
-        return <ForgotPasswordView onCancel={() => setView("login")} />;
+        return (
+          <AnimatedView viewKey="forgot">
+            <ForgotPasswordView onCancel={() => setView("login")} />
+          </AnimatedView>
+        );
       case "contact":
-        return <ContactView onClose={onClose} />;
+        return (
+          <AnimatedView viewKey="contact">
+            <ContactView onClose={handleClose} />
+          </AnimatedView>
+        );
       default:
         return null;
     }
   };
 
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "rgba(0,0,0,0.5)",
-        padding: 16,
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          background: "#fff",
-          borderRadius: 16,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
-          width: "100%",
-          maxWidth: 440,
-          maxHeight: "90vh",
-          overflowY: "auto",
-          padding: 32,
-          zIndex: 10000,
-        }}
-      >
-        <button
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            top: 14,
-            right: 14,
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            border: "none",
-            background: "none",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-        >
-          <X size={20} color="#374151" />
-        </button>
-        <Logo />
-        {renderView()}
-      </div>
-    </div>
-  );
+  return <ModalShell onClose={onClose}>{renderView}</ModalShell>;
 };
 
 export default ContactModal;
