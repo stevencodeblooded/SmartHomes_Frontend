@@ -31,7 +31,7 @@ const HowItWorks = () => {
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             {/* Left Content */}
             <div className="max-w-xl">
-              <h2 className="text-3xl font-semibold text-gray-900 mb-2 leading-tight">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 mb-2">
                 Find your next perfect place to live in just 3 steps
               </h2>
               <p className="text-gray-600 text-sm mb-5">
@@ -77,7 +77,7 @@ const HowItWorks = () => {
 
                     {openStep === step.number && (
                       <div className="pb-6 px-2 animate-slide-down">
-                        <p className="text-gray-600 leading-relaxed">
+                        <p className="text-gray-600 text-sm lg:text-base leading-relaxed">
                           {step.description}
                         </p>
                       </div>

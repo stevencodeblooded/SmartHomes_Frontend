@@ -14,6 +14,7 @@ import {
   Building2,
   Building,
   GraduationCap,
+  ChevronDown,
 } from "lucide-react";
 import LocationFilter from "../components/listings/LocationFilter";
 import PropertyFilters from "../components/listings/PropertyFilters";
@@ -284,6 +285,7 @@ const MobileFilterPanel = ({ filters, onFilterChange, onClose, onClear }) => {
         </div>
 
         <div className="p-5 space-y-6">
+          {/* Property type */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-3">
               Property type
@@ -306,6 +308,7 @@ const MobileFilterPanel = ({ filters, onFilterChange, onClose, onClear }) => {
             </div>
           </div>
 
+          {/* Total rent */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-3">
               Total rent (Ksh)
@@ -328,28 +331,31 @@ const MobileFilterPanel = ({ filters, onFilterChange, onClose, onClear }) => {
             </div>
           </div>
 
+          {/* Number of rooms */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-3">
               Number of rooms
             </h3>
             <div className="grid grid-cols-2 gap-3">
               {["minRooms", "maxRooms"].map((key) => (
-                <select
-                  key={key}
-                  value={filters[key]}
-                  onChange={(e) => onFilterChange({ [key]: e.target.value })}
-                  className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-400"
-                >
-                  <option value="">
-                    {key === "minRooms" ? "Minimum" : "Max"}
-                  </option>
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                      {n === 5 ? "+" : ""}
+                <div key={key} className="relative">
+                  <select
+                    value={filters[key]}
+                    onChange={(e) => onFilterChange({ [key]: e.target.value })}
+                    className="w-full px-3 py-2.5 pr-9 border border-gray-300 rounded-lg text-sm bg-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-400"
+                  >
+                    <option value="">
+                      {key === "minRooms" ? "Minimum" : "Max"}
                     </option>
-                  ))}
-                </select>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                        {n === 5 ? "+" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                </div>
               ))}
             </div>
           </div>

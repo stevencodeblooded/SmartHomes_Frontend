@@ -15,8 +15,8 @@ const HomePage = () => {
         <HowItWorks />
         <FeaturedCategories />
         <FeaturedListings />
-        <PopularDestinations />
         <CTABanner />
+        <PopularDestinations />
       </main>
     </div>
   );

@@ -14,6 +14,8 @@ import PropertyDetailPage from "./pages/PropertyDetailPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import MainLayout from "./layouts/MainLayout";
 import MapViewPage from "./pages/MapViewPage";
+import LandlordPage from "./pages/LandlordPage";
+import UserPage from "./pages/UserPage";
 
 function App() {
   const router = createBrowserRouter(
@@ -23,6 +25,8 @@ function App() {
         <Route path="/search" element={<ListingsPage />} />
         <Route path="/property/:id" element={<PropertyDetailPage />} />
         <Route path="/map" element={<MapViewPage />} />
+        <Route path="/landlord" element={<LandlordPage />} />
+        <Route path="/user" element={<UserPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>,
     ),

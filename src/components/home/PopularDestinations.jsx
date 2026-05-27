@@ -175,7 +175,7 @@ const PopularDestinations = () => {
         {/* Section Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-semibold text-gray-900 mb-2 leading-tight">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold mb-2 text-gray-900">
               Popular Destinations
             </h2>
             <p className="text-sm text-gray-600">

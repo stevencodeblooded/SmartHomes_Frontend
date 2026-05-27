@@ -8,7 +8,7 @@ const CTABanner = () => {
 
   return (
     <section className="bg-red-500">
-      <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 py-10 px-6 md:px-12 text-white">
+      <div className="container my-10 mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 py-10 px-6 md:px-12 text-white">
         <div className="text-center sm:text-left">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-2">
             Don't wait any longer, start looking for a house right away!
@@ -22,7 +22,7 @@ const CTABanner = () => {
         <div className="flex-shrink-0 w-full sm:w-auto">
           <button
             onClick={() => navigate("/search")}
-            className="w-full sm:w-auto bg-white text-red-500 hover:bg-red-50 active:scale-95 px-8 py-3.5 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 shadow-sm"
+            className="w-full sm:w-auto bg-white text-red-500 hover:bg-red-50 active:scale-95 px-8 py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all flex-shrink-0 shadow-md hover:shadow-lg"
           >
             <Search className="w-5 h-5" />
             Search now

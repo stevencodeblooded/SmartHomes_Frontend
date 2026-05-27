@@ -115,7 +115,7 @@ const FeaturedCategories = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-semibold text-gray-900 mb-2 leading-tight">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-gray-900 mb-2">
               Browse by Category
             </h2>
             <p className="text-sm text-gray-600">

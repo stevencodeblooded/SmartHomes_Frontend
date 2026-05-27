@@ -259,8 +259,20 @@ export const StepIndicator = ({ currentStep }) => {
 export const TenantDropdown = ({ value, onChange, error }) => {
   const [open, setOpen] = useState(false);
   const options = ["Single", "Student", "Couple", "Family"];
+  const ref = React.useRef(null);
+
+  // Close on outside click
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative" }} ref={ref}>
+      {/* Trigger button */}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -284,7 +296,7 @@ export const TenantDropdown = ({ value, onChange, error }) => {
         <span>{value || "Tenant Type"}</span>
         <ChevronDown
           size={18}
-          color="#9ca3af"
+          color={open ? "#e53e3e" : "#9ca3af"}
           style={{
             position: "absolute",
             right: 12,
@@ -294,49 +306,78 @@ export const TenantDropdown = ({ value, onChange, error }) => {
           }}
         />
       </button>
+
+      {/* Dropdown panel */}
       {open && (
         <div
           style={{
             position: "absolute",
-            top: "calc(100% + 4px)",
+            top: "calc(100% + 8px)",
             left: 0,
             right: 0,
             background: "#fff",
             border: "1px solid #e5e7eb",
-            borderRadius: 8,
+            borderRadius: 16,
             zIndex: 200,
-            boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
             overflow: "hidden",
+            padding: 6,
           }}
         >
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-              style={{
-                width: "100%",
-                padding: "12px 16px",
-                textAlign: "left",
-                background: value === opt ? "#fef2f2" : "#fff",
-                color: "#1a2e44",
-                fontSize: 15,
-                fontFamily: "'Source Sans Pro', 'Segoe UI', sans-serif",
-                border: "none",
-                cursor: "pointer",
-                display: "block",
-              }}
-              onMouseEnter={(e) => (e.target.style.background = "#fef2f2")}
-              onMouseLeave={(e) =>
-                (e.target.style.background = value === opt ? "#fef2f2" : "#fff")
-              }
-            >
-              {opt}
-            </button>
-          ))}
+          {options.map((opt) => {
+            const active = value === opt;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => {
+                  onChange(opt);
+                  setOpen(false);
+                }}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  textAlign: "left",
+                  background: active ? "#fef2f2" : "#fff",
+                  color: active ? "#e53e3e" : "#1a2e44",
+                  fontSize: 14,
+                  fontFamily: "'Source Sans Pro', 'Segoe UI', sans-serif",
+                  border: "none",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  fontWeight: active ? 600 : 400,
+                  transition: "background 0.12s ease",
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) e.currentTarget.style.background = "#f9fafb";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = active
+                    ? "#fef2f2"
+                    : "#fff";
+                }}
+              >
+                <span>{opt}</span>
+                {active && (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#e53e3e"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
